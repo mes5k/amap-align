@@ -1,0 +1,25 @@
+
+See http://baboon.math.berkeley.edu/amap/ for more information.
+
+INSTALL
+=======
+
+To build the AMAP alignment code, just type:
+
+	% make
+
+
+To build the AmapDisplayer, you'll need ant (http://ant.apache.org) installed and,
+if I ever get around to writing unit tests, JUnit (http://junit.org).  Once ant 
+is installed, just type:
+
+	% ant all
+
+
+LICENSE
+=======
+
+The various bits of AMAP code are distributed under the GPL.  Please see the license
+in the license directory for details.
+
+
