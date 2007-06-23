@@ -757,7 +757,15 @@ class MultiSequenceDag {
 	  break;
 	}
       }
+      if (enableVerbose)
+	cerr << "Adding edge" << endl << *edge;
       int result = AddEdge(edge);
+      if (enableVerbose) {
+	if (result)
+	  cerr << "Failed to add edge with error code: " << result << endl;
+	else
+	  cerr << "Edge added successfully" << endl;
+      }
       if (!result) { 
 	expectedAccuracy += delta;
 	if (enableVerbose) {

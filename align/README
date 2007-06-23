@@ -1,6 +1,6 @@
 
-                          AMAP 2.0
-                          ~~~~~~~~                          
+                          AMAP 2.01
+                          ~~~~~~~~~                          
 
    A fast and accurate multiple sequence alignment program
 
@@ -25,7 +25,9 @@ For more details on AMAP and AMA, see
 and for more details on sequence-annealing, see
 
    Schwartz, Ariel S. and Pachter, Lior.
-   Multiple Alignment by Sequence Annealing (Submitted for publication).
+   Multiple Alignment by Sequence Annealing. 
+   in the Proceedings of the European Conference on Computation Biology (ECCB), 
+   Eilat, Israel, September 2006.
 
 The current version of AMAP uses the PROBCONS 1.09 code base for some of the input/output procedures,
 and for the calculation of posterior probabilities (see PROBCONS.README). Future releases might implement
@@ -49,5 +51,7 @@ AMAP.1.0, 8/15/2005 (Ariel Schwartz)
    -- initial release
 AMAP.1.1, 2/20/2006 (Ariel Schwartz)
    -- Fixed a bug with the calculation of gap posterior probabilities of multiple-sequence-alignments (no effect on pairwise alignments).
-AMAP.2.0  4/16/2006
+AMAP.2.0  4/16/2006 (Ariel Schwartz)
    -- Implemented the sequence-annealing alignment methods as an improved alternative to progressive alignment.
+AMAP.2.01 6/8/2006  (Ariel Schwartz)
+   -- Corrected DNA alignment parameters file. Improved debug output.

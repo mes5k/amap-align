@@ -183,12 +183,27 @@ int main (int argc, char **argv){
 
   // if we are not training, we must simply want to align some sequences
   else {
-
+    
+    bool allStartWithM = true;
     // load all files together
     MultiSequence *sequences = new MultiSequence(); assert (sequences);
     for (int i = 0; i < (int) sequenceNames.size(); i++){
       cerr << "Loading sequence file: " << sequenceNames[i] << endl;
       sequences->LoadMFA (sequenceNames[i], true);
+    }
+
+    for (int i = 0; i < sequences->GetNumSequences(); i++){
+      char firstChar = *(++(sequences->GetSequence(i)->GetDataPtr()));
+      allStartWithM = firstChar == 'M' ? allStartWithM : false;
+    }
+
+    if (allStartWithM) {
+      for (int i = 0; i < sequences->GetNumSequences(); i++){
+	int seqLength = sequences->GetSequence(0)->GetLength();
+	Sequence* newSeq = sequences->GetSequence(0)->GetRange(2,seqLength);
+	sequences->RemoveSequence(0);
+	sequences->AddSequence(newSeq);
+      }
     }
 
     // do all "pre-training" repetitions first
@@ -212,6 +227,22 @@ int main (int argc, char **argv){
     MultiSequence *alignment = DoAlign (sequences,
                                         ProbabilisticModel (initDistrib, gapOpen, gapExtend,  emitPairs, emitSingle),
                                         initDistrib, gapOpen, gapExtend, emitPairs, emitSingle);
+
+    if (allStartWithM) {
+      for (int i = 0; i < alignment->GetNumSequences(); i++){
+	SafeVector<char>* newData = new SafeVector<char>;
+	Sequence* currSeq = alignment->GetSequence(0);
+	SafeVector<char>::iterator dataItr = currSeq->GetDataPtr();
+	newData->push_back(*dataItr++);
+	newData->push_back('M');
+	for (int j = 0; j < currSeq->GetLength(); j++) {
+	  newData->push_back(*dataItr++);
+	}
+	Sequence *newSeq = new Sequence(newData, currSeq->GetHeader(), currSeq->GetLength() + 1, currSeq->GetSortLabel(), currSeq->GetLabel());
+	alignment->AddSequence(newSeq);
+	alignment->RemoveSequence(0);
+      }
+    }
 
     if (onlyPrintPosteriors)
       return 0;
