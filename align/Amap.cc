@@ -40,6 +40,7 @@ bool enableDagAlignment = true;
 bool enableEdgeReordering = true;
 bool useTgf = true;
 bool onlyPrintPosteriors = false;
+bool outputForGUI = false;
 int numConsistencyReps = 0;
 int numPreTrainingReps = 0;
 int numIterativeRefinementReps = 0;
@@ -246,7 +247,7 @@ int main (int argc, char **argv){
 
     if (onlyPrintPosteriors)
       return 0;
-    if (!enableAllPairs){
+    if (!enableAllPairs && !outputForGUI){
       if (enableClustalWOutput)
 	alignment->WriteALN (cout);
       else
@@ -568,7 +569,7 @@ MultiSequence *DoAlign (MultiSequence *sequences, const ProbabilisticModel &mode
 	cerr << "Building DAG" << endl;
 	MultiSequenceDag mds(sequences,false);
 	cerr << "Aligning sequences with DAG alignment" << endl;
-	finalAlignment = mds.AlignDag(sparseMatrices, gapFactor, enableVerbose, enableEdgeReordering, useTgf, edgeWeightThreshold);
+	finalAlignment = mds.AlignDag(sparseMatrices, gapFactor, enableVerbose, outputForGUI, enableEdgeReordering, useTgf, edgeWeightThreshold);
       }
       // build annotation
       if (enableAnnotation){
@@ -930,6 +931,11 @@ SafeVector<string> ParseParams (int argc, char **argv){
       // verbose reporting
       else if (!strcmp (argv[i], "-v") || !strcmp (argv[i], "--verbose")){
         enableVerbose = true;
+      }
+
+      // verbose reporting
+      else if (!strcmp (argv[i], "-gui")) {
+        outputForGUI = true;
       }
 
       // alignment order
