@@ -692,6 +692,35 @@ class MultiSequenceDag {
     return ret;
   }
 
+  /*****************************************************************/
+  // MultiSequenceDag::GetSequences()
+  //
+  // Returns the current sequences including gaps.
+  /*****************************************************************/
+
+  string GetSequences() {
+    string s = "";
+    SafeVector<SafeVector<char>::iterator> oldPtrs(numSequences);
+
+    // grab old data
+    for (int i = 0; i < numSequences; i++){
+      oldPtrs[i] = sequences->GetSequence(i)->GetDataPtr();
+    }
+
+    // add all needed columns
+    for (int j = 0; j < numSequences; j++) {
+      s += '>' + sequences->GetSequence(j)->GetHeader() + ' ';      
+      for (list<Column*>::iterator colIter = columns.begin(); colIter != columns.end(); colIter++) {
+	MII colPos = (*colIter)->GetSeqPositions();
+	if (colPos.find(j) != colPos.end())
+	  s += oldPtrs[j][colPos[j]];
+	else
+	  s += '-';
+      }
+      s += '\n';
+    }
+    return s;
+  }
 
   /*****************************************************************/
   // MultiSequenceDag::AlignDag()
@@ -704,10 +733,15 @@ class MultiSequenceDag {
   /*****************************************************************/
 
   MultiSequence* AlignDag(const SafeVector<SafeVector<SparseMatrix *> > &sparseMatrices, float gapFactor, 
-			  bool enableVerbose, bool enableEdgeReordering, bool useTgf, float edgeWeightThreshold){
+			  bool enableVerbose, bool outputForGUI, bool enableEdgeReordering, bool useTgf, float edgeWeightThreshold){
     priority_queue<Edge*, vector<Edge*>, smaller_weight> edges;
     Edge *edge;
     cerr << "Creating candidate edge list" << endl;
+    if (outputForGUI) {
+      cout << "Weight infinity" << endl << 
+	this->GetSequences() << endl;
+    }
+
     for (int i = 0; i < numSequences; i++) {
       int seq1Length = sequences->GetSequence(i)->GetLength();
       for (int j = i + 1; j < numSequences; j++) {
@@ -768,6 +802,10 @@ class MultiSequenceDag {
       }
       if (!result) { 
 	expectedAccuracy += delta;
+	if (outputForGUI) {
+	  cout << "Weight " << edge->weight << endl << 
+	    this->GetSequences() << endl;
+	}
 	if (enableVerbose) {
 	  cerr << "Alignment at edge-weight " << edge->weight << endl <<
 	    "with incermental expected accuracy improvement of  " << delta << endl <<
