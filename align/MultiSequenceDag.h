@@ -467,7 +467,7 @@ class MultiSequenceDag {
   // online topological ordering algorithm.
   /*****************************************************************/
 
-  void Reorder(vector<Column*> &rForward, vector<Column*> &rBackward) {
+  void Reorder(vector<Column*> &rForward, vector<Column*> &rBackward, bool outputForGUI) {
     list<int> indexes;
 
     for (vector<Column*>::iterator rbIter = rBackward.begin(); rbIter != rBackward.end(); rbIter++) {
@@ -479,10 +479,14 @@ class MultiSequenceDag {
     indexes.sort();
     list<int>::iterator idxIter = indexes.begin();
     for (unsigned i = 0; i < rBackward.size(); i++) {
+      if (outputForGUI)
+	cout << rBackward[0]->GetIndex() << ' ';
       rBackward[0]->SetIndex(*(idxIter++));
       pop_heap(rBackward.begin(),rBackward.end() - i,greater_index());
     }
     for (unsigned i = 0; i < rForward.size(); i++) {
+      if (outputForGUI)
+	cout << rForward[0]->GetIndex() << ' ';
       rForward[0]->SetIndex(*(idxIter++));
       pop_heap(rForward.begin(),rForward.end() - i,greater_index());
     }
@@ -569,7 +573,7 @@ class MultiSequenceDag {
   // online topological ordering algorithm.
   /*****************************************************************/
 
-  int AddEdge (Edge *newEdge) {
+  int AddEdge (Edge *newEdge, bool outputForGUI) {
     Column* col1 = newEdge->sourceColumn;
     Column* col2 = newEdge->targetColumn;
     while (col1->GetMergedInto() != col1)  // get current source column
@@ -610,11 +614,17 @@ class MultiSequenceDag {
     } else if (rBackward.size() == 1) {
       col1 = lBound;
       col2 = uBound;
-    } else 
-      Reorder(rForward,rBackward);
-
+    } else {
+      if (outputForGUI)
+	cout << "Reorder ";
+      Reorder(rForward, rBackward, outputForGUI);
+      if (outputForGUI)
+	cout << endl;
+    }
     newEdge->sourceColumn = col1;
     newEdge->targetColumn = col2;
+    if (outputForGUI)
+      cout << "Merge " << col2->GetIndex() << ' ' << col1->GetIndex() << endl;
     Merge(newEdge);
     oldColumns.push_back(col2);              // keep pointers to old columns for later memory deallocation
     columns.remove(col2);
@@ -793,7 +803,7 @@ class MultiSequenceDag {
       }
       if (enableVerbose)
 	cerr << "Adding edge" << endl << *edge;
-      int result = AddEdge(edge);
+      int result = AddEdge(edge, outputForGUI);
       if (enableVerbose) {
 	if (result)
 	  cerr << "Failed to add edge with error code: " << result << endl;
