@@ -31,16 +31,16 @@ import java.io.*;
 public class AmapReader {
 
 	private Map<String,String> nameSeqMap;
+	private Map<String,String> nameColorMap;
 	List<Alignment> alignments;
 	InputStream is;
 
 	double pWeight;
-	double nWeight;
 
 	public AmapReader(InputStream is) {
 		this.is = is;
-		nameSeqMap = new HashMap<String,String>();
 		alignments = new ArrayList<Alignment>();
+		reset();
 		read();
 	}
 
@@ -48,6 +48,53 @@ public class AmapReader {
 		return alignments;
 	}
 
+	private void read() {
+		Pattern pw = Pattern.compile("^Weight\\s+(\\d+\\.\\d+)$");
+		Matcher pwm = pw.matcher("");
+
+		Pattern s = Pattern.compile("^>(\\S+)\\s+(\\S+)$");
+		Matcher sm = s.matcher("");
+
+		Pattern c = Pattern.compile("^@(\\S+)\\s+(\\S+)$");
+		Matcher cm = c.matcher("");
+
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+		
+			String line = null;
+			while ( (line = br.readLine()) != null ) {
+				pwm.reset(line);
+				if ( pwm.matches() ) {
+					saveAlignment();
+					pWeight = new Double( pwm.group(1) ).doubleValue();
+					continue;
+				}
+
+				sm.reset(line);
+				if ( sm.matches() ) {
+					String key = sm.group(1);
+					String val = sm.group(2);
+					if ( nameSeqMap.containsKey( key ) )
+						val = nameSeqMap.get(key) + val;
+					nameSeqMap.put(key,val);
+					continue;
+				}
+
+				cm.reset(line);
+				if ( cm.matches() ) {
+					String key = cm.group(1);
+					String val = cm.group(2);
+					if ( nameColorMap.containsKey( key ) )
+						val = nameColorMap.get(key) + val;
+					nameColorMap.put(key,val);
+					continue;
+				}
+			}
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+	}
+/*
 	private void read() {
 		Pattern pw = Pattern.compile("^previous weight= (\\d+\\.\\d+)\\s+.*");
 		Matcher pwm = pw.matcher("");
@@ -90,19 +137,20 @@ public class AmapReader {
 			ioe.printStackTrace();
 		}
 	}
+	*/
 
 	private void saveAlignment() {
-		if ( pWeight > 0 && nWeight > 0 ) {
-			if ( !( nameSeqMap.containsKey("wrong") ||
-			        nameSeqMap.containsKey("Visited:") ||
-			        nameSeqMap.containsKey("weigth:") ) ) {
-				Alignment a = new Alignment( nameSeqMap, pWeight, nWeight );
-				alignments.add(a);
-			}
-			nameSeqMap = new HashMap<String,String>();
-			pWeight = -1;
-			nWeight = -1;
+		if ( pWeight > 0 ) {
+			Alignment a = new Alignment( nameSeqMap, nameColorMap, pWeight );
+			alignments.add(a);
+			reset();
 		}
+	}
+
+	private void reset() {
+		nameSeqMap = new HashMap<String,String>();
+		nameColorMap = new HashMap<String,String>();
+		pWeight = -1;
 	}
 }
 

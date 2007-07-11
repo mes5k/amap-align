@@ -28,12 +28,12 @@ import java.util.*;
 public class Alignment {
 
 	Map<String,String> seqs;
-	double pWeight;
+	Map<String,String> colors;
 	double nWeight;
 
-	public Alignment(Map<String,String> seqs, double pWeight, double nWeight) {
+	public Alignment(Map<String,String> seqs, Map<String,String> colors, double nWeight) {
 		this.seqs = seqs;
-		this.pWeight = pWeight;
+		this.colors = colors;
 		this.nWeight = nWeight;
 	}
 
@@ -41,20 +41,17 @@ public class Alignment {
 		return seqs;
 	}
 
-	public double getPrevWeight() {
-		return pWeight;
+	public Map<String,String> getColors() {
+		return colors;
 	}
 
-	public double getNewWeight() {
+	public double getWeight() {
 		return nWeight;
 	}
 
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("Previous weight = ");
-		sb.append((new Double(pWeight)).toString());
-		sb.append("\n");
-		sb.append("New weight      = ");
+		sb.append("Weight      = ");
 		sb.append((new Double(nWeight)).toString());
 		sb.append("\n");
 		for ( String key : seqs.keySet() ) {
