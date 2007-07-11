@@ -49,7 +49,7 @@ public class AmapReader {
 	}
 
 	private void read() {
-		Pattern pw = Pattern.compile("^Weight\\s+(\\d+\\.\\d+)$");
+		Pattern pw = Pattern.compile("^Weight\\s+([+-]?(?=\\d|\\.\\d)\\d*(\\.\\d*)?([Ee]([+-]?\\d+))?)$");
 		Matcher pwm = pw.matcher("");
 
 		Pattern s = Pattern.compile("^>(\\S+)\\s+(\\S+)$");
