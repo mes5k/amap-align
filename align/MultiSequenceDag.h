@@ -777,7 +777,7 @@ class MultiSequenceDag {
     Edge *edge;
     cerr << "Creating candidate edge list" << endl;
     if (outputForGUI) {
-      cout << "Weight infinity" << endl << 
+      cout << "Weight " << std::numeric_limits<float>::max() << endl << 
 	this->GetSequences() << endl;
     }
 
