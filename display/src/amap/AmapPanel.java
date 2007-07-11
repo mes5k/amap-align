@@ -57,14 +57,14 @@ public class AmapPanel extends JPanel
         formatter.setMinimum(new Integer(0));
         formatter.setMaximum(new Integer(maxSliderVal));
         textField = new JFormattedTextField(formatter);
-        textField.setValue(new Integer(0));
+        textField.setValue(new Integer(maxSliderVal));
         textField.setColumns(5); //get some space
         textField.addPropertyChangeListener(this);
 
         JLabel weightLabel = new JLabel("Weight: ", JLabel.CENTER);
 
         weightField = new JTextField();
-		weightField.setText(getWeight(0));
+		weightField.setText(getWeight(maxSliderVal));
         weightField.setColumns(10); //get some space
         weightField.addPropertyChangeListener(this);
 
@@ -117,11 +117,18 @@ public class AmapPanel extends JPanel
         add(alignSlider);
         add(labelAndTextField);
         setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+		alignSlider.setValue(maxSliderVal);
+		updateSlider(alignSlider);
     }
 
     /** Listen to the slider. */
     public void stateChanged(ChangeEvent e) {
         JSlider source = (JSlider)e.getSource();
+		updateSlider(source);
+	}
+
+	private void updateSlider(JSlider source) {
         int ind = (int)source.getValue();
         updatePicture(ind); //display the next picture
 		if (!source.getValueIsAdjusting()) {
@@ -149,7 +156,7 @@ public class AmapPanel extends JPanel
 
 	protected String getWeight(int index) {
 		DecimalFormat df = new DecimalFormat("0.00000");
-		return df.format( aligns.get(index).getNewWeight() );
+		return df.format( aligns.get(index).getWeight() );
 	}
 
 	protected int calcTickSpacing(int val) {
