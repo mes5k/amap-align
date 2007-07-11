@@ -567,9 +567,9 @@ MultiSequence *DoAlign (MultiSequence *sequences, const ProbabilisticModel &mode
 	delete tree;
       } else {
 	cerr << "Building DAG" << endl;
-	MultiSequenceDag mds(sequences,false);
+	MultiSequenceDag mds(sequences,false,outputForGUI);
 	cerr << "Aligning sequences with DAG alignment" << endl;
-	finalAlignment = mds.AlignDag(sparseMatrices, gapFactor, enableVerbose, outputForGUI, enableEdgeReordering, useTgf, edgeWeightThreshold);
+	finalAlignment = mds.AlignDag(sparseMatrices, gapFactor, enableVerbose, enableEdgeReordering, useTgf, edgeWeightThreshold);
       }
       // build annotation
       if (enableAnnotation){

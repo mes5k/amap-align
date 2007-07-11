@@ -33,6 +33,7 @@ class Column {
   bool visited;                             // indicates if the column has been visited by the dfs 
   MII seqPositions;                         // map of (seq_id,pos) pairs in the column
   Column *mergedInto;                       // the Column this column has merged into
+  char consensus;                           // the consensus character for this column
 
  public:
 
@@ -42,20 +43,8 @@ class Column {
   // Constructor.  Creates a new empty column.
   /*****************************************************************/
     
-  Column (int pos) : index (pos), visited (false), mergedInto (this) { 
+  Column (int pos) : index (pos), visited (false), mergedInto (this), consensus (0) { 
   }
-
-
-  /*****************************************************************/
-  // Column::Column()
-  //
-  // Constructor. Creates a new column 
-  // with list of sequence positions.
-  /*****************************************************************/
-
-  Column (int pos, MII positions) : index (pos), visited (false), seqPositions (positions), mergedInto (this) { 
-  }
-
 
   /*****************************************************************/
   // Column::operator<()
@@ -167,6 +156,18 @@ class Column {
     seqPositions.insert(seqPos);
   }
 
+  void UpdateConsensus(MultiSequence* sequences, int numSequences);
+
+  /*****************************************************************/
+  // Column::GetConsensus()
+  //
+  // Returns the current character consensus
+  /*****************************************************************/
+
+  char GetConsensus () {
+    return consensus;
+  }
+
   /*****************************************************************/
   // Column::operator<<()
   //
@@ -184,6 +185,7 @@ class Column {
     os << ']' << endl;
     return os;
   } 
+
 };
 
 /*****************************************************************/
@@ -369,7 +371,12 @@ class MultiSequenceDag {
   int alignLength;                      // num of columns in the alignment
   MPIIC seqPos2colIndex;                // mapping from sequence positions to columns
   float expectedAccuracy;               // the expected accuracy of the alignment
+  bool outputForGUI;                    // true if the output is for the AMAP GUI
+ public:
+  static const char pepGroup[26];             // peptide groups for GUI coloring (from TEXshade)
+  static const bool pepSim[26][26];         // peptide similarities for GUI coloring (from TEXshade)
 
+ private:
   /*****************************************************************/
   // MultiSequenceDag::init()
   //
@@ -412,6 +419,7 @@ class MultiSequenceDag {
       }
     }
   }
+
 
   /*****************************************************************/
   // MultiSequenceDag::DfsF()
@@ -467,7 +475,7 @@ class MultiSequenceDag {
   // online topological ordering algorithm.
   /*****************************************************************/
 
-  void Reorder(vector<Column*> &rForward, vector<Column*> &rBackward, bool outputForGUI) {
+  void Reorder(vector<Column*> &rForward, vector<Column*> &rBackward) {
     list<int> indexes;
 
     for (vector<Column*>::iterator rbIter = rBackward.begin(); rbIter != rBackward.end(); rbIter++) {
@@ -521,6 +529,8 @@ class MultiSequenceDag {
       seqPos2colIndex[PII(iter->first,iter->second)] = col1;
     }
     col2->SetMergedInto(col1);
+    if (outputForGUI)
+      col1->UpdateConsensus(sequences, numSequences);
   }
 
  public:
@@ -533,7 +543,7 @@ class MultiSequenceDag {
   // Uses input alignment if aligned is true.
   /*****************************************************************/
 
-  MultiSequenceDag (MultiSequence *msa, bool aligned) : sequences (msa), numSequences(msa->GetNumSequences()) {
+  MultiSequenceDag (MultiSequence *msa, bool aligned, bool forGUI = false) : sequences (msa), numSequences(msa->GetNumSequences()), outputForGUI(forGUI) {
     init(aligned);
   }
   
@@ -573,7 +583,7 @@ class MultiSequenceDag {
   // online topological ordering algorithm.
   /*****************************************************************/
 
-  int AddEdge (Edge *newEdge, bool outputForGUI) {
+  int AddEdge (Edge *newEdge) {
     Column* col1 = newEdge->sourceColumn;
     Column* col2 = newEdge->targetColumn;
     while (col1->GetMergedInto() != col1)  // get current source column
@@ -617,7 +627,7 @@ class MultiSequenceDag {
     } else {
       if (outputForGUI)
 	cout << "Reorder ";
-      Reorder(rForward, rBackward, outputForGUI);
+      Reorder(rForward, rBackward);
       if (outputForGUI)
 	cout << endl;
     }
@@ -705,11 +715,12 @@ class MultiSequenceDag {
   /*****************************************************************/
   // MultiSequenceDag::GetSequences()
   //
-  // Returns the current sequences including gaps.
+  // Returns the current sequences including gaps and color codes
   /*****************************************************************/
 
   string GetSequences() {
     string s = "";
+    string colors = "";
     SafeVector<SafeVector<char>::iterator> oldPtrs(numSequences);
 
     // grab old data
@@ -720,17 +731,35 @@ class MultiSequenceDag {
     // add all needed columns
     for (int j = 0; j < numSequences; j++) {
       s += '>' + sequences->GetSequence(j)->GetHeader() + ' ';      
+      colors += '@' + sequences->GetSequence(j)->GetHeader() + ' ';      
       for (list<Column*>::iterator colIter = columns.begin(); colIter != columns.end(); colIter++) {
 	MII colPos = (*colIter)->GetSeqPositions();
-	if (colPos.find(j) != colPos.end())
+	if (colPos.find(j) != colPos.end()) {
 	  s += oldPtrs[j][colPos[j]];
-	else
+	  char consensus = (*colIter)->GetConsensus();
+	  if (consensus) {
+	    if (oldPtrs[j][colPos[j]] == consensus) 
+	      colors += '1';
+	    else if (oldPtrs[j][colPos[j]] == -consensus) 
+	      colors += '2';
+	    else if (pepGroup[(int) oldPtrs[j][colPos[j]] - 'A'] == consensus || consensus >= 'A' && pepSim[(int) consensus - 'A'][(int) oldPtrs[j][colPos[j]] - 'A']) 
+	      colors += '3';
+	    else
+	      colors += '0';
+	  } else
+	    colors += '0';
+	}
+	else {
 	  s += '-';
+	  colors += '0';
+	}
       }
       s += '\n';
+      colors += '\n';
     }
-    return s;
+    return s + colors;
   }
+
 
   /*****************************************************************/
   // MultiSequenceDag::AlignDag()
@@ -743,7 +772,7 @@ class MultiSequenceDag {
   /*****************************************************************/
 
   MultiSequence* AlignDag(const SafeVector<SafeVector<SparseMatrix *> > &sparseMatrices, float gapFactor, 
-			  bool enableVerbose, bool outputForGUI, bool enableEdgeReordering, bool useTgf, float edgeWeightThreshold){
+			  bool enableVerbose, bool enableEdgeReordering, bool useTgf, float edgeWeightThreshold){
     priority_queue<Edge*, vector<Edge*>, smaller_weight> edges;
     Edge *edge;
     cerr << "Creating candidate edge list" << endl;
@@ -803,7 +832,7 @@ class MultiSequenceDag {
       }
       if (enableVerbose)
 	cerr << "Adding edge" << endl << *edge;
-      int result = AddEdge(edge, outputForGUI);
+      int result = AddEdge(edge);
       if (enableVerbose) {
 	if (result)
 	  cerr << "Failed to add edge with error code: " << result << endl;
@@ -832,5 +861,66 @@ class MultiSequenceDag {
   }
 
 };
+                                               // A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+const char MultiSequenceDag::pepGroup[26]     =  {5,0,0,4,4,1,5,3,2,0,3,2,2,7,0,0,7,3,6,6,0,2,1,0,1,0};
+const bool MultiSequenceDag::pepSim[26][26]   = {{1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0}, // A
+						 {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // B
+						 {0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // C
+						 {0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0}, // D
+						 {0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0}, // E
+						 {0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0}, // F
+						 {1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // G
+						 {0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0}, // H
+						 {0,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0}, // I
+						 {0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // J
+						 {0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0}, // K
+						 {0,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0}, // L
+						 {0,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0}, // M
+						 {0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0}, // N
+						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0}, // O
+						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0}, // P
+						 {0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0}, // Q
+						 {0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0}, // R
+						 {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0}, // S
+						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0}, // T
+						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0}, // U
+						 {0,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0}, // V
+						 {0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0}, // W
+						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0}, // X
+						 {0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0}, // Y
+						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1}};// Z
+
+
+/*****************************************************************/
+// Column::UpdateConsensus()
+//
+// Updates the consensus character
+/*****************************************************************/
+void Column::UpdateConsensus(MultiSequence* sequences, int numSequences) {
+  unsigned int pepCount[26] = {0};
+  unsigned int pepGroupCount[10] = {0};
+  unsigned int threshold = seqPositions.size() / 2;
+  char groupConsensus = 0;
+  
+  if (!threshold) {
+    consensus = 0;
+    return;
+  }
+
+  for (MII::iterator posIter = seqPositions.begin(); posIter != seqPositions.end(); posIter++) {
+    int currChar = sequences->GetSequence(posIter->first)->GetDataPtr()[posIter->second] - 'A';
+    if (++pepCount[currChar] > threshold) {
+      consensus = (char) currChar + 'A';
+      if ((int) pepCount[currChar] == numSequences)
+	consensus = -consensus;
+    }
+    if (++pepGroupCount[(int) MultiSequenceDag::pepGroup[currChar]] > threshold) {
+      groupConsensus = MultiSequenceDag::pepGroup[currChar];
+    }
+  }
+  if (!consensus) 
+    consensus = groupConsensus;
+}
+
 
 #endif
