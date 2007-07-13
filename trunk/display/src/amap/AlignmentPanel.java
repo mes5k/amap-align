@@ -114,6 +114,7 @@ public class AlignmentPanel extends JPanel implements ComponentListener {
 		len = aligns.get(0).getSequences().get(orderedKeys.get(0)).length();
 
 		height = ((len/numCharsAcross)+1) * groupOff;
+		height = Math.max(height, (int)d.getHeight());
 
 		setPreferredSize( new Dimension(width,height) );
 	}
