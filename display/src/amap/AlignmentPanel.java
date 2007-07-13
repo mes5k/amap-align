@@ -153,11 +153,10 @@ public class AlignmentPanel extends JPanel implements ComponentListener {
 
 				int xLoc = xOff+nameWidth+((j%numCharsAcross)*glyphWidth);
 				int yLoc = ((j/numCharsAcross)*groupOff)+(yOff*i);
-				int glyphYLoc = os*(((j/numCharsAcross)*groupOff)-(yOff*i));
 
 				// set glyph position
 				Point2D pos = gv.getGlyphPosition(j); 
-				pos.setLocation(xLoc, glyphYLoc);
+				pos.setLocation(xLoc, yLoc);
 				gv.setGlyphPosition(j,pos);
 
 				// draw the background rect 
@@ -176,9 +175,6 @@ public class AlignmentPanel extends JPanel implements ComponentListener {
 				g2.setPaint(textColMap.get( colCode ));
 				g2.fill(glyph);
 			}
-
-			//g2.setPaint(Color.black);
-			//g2.drawGlyphVector(gv,0,0);
 		}
 	}
 
