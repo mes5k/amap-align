@@ -33,13 +33,16 @@ public class AmapReader {
 	private Map<String,String> nameSeqMap;
 	private Map<String,String> nameColorMap;
 	List<Alignment> alignments;
+	List<String> keys;
 	InputStream is;
+	boolean firstTime;
 
 	double pWeight;
 
 	public AmapReader(InputStream is) {
 		this.is = is;
 		alignments = new ArrayList<Alignment>();
+		keys = new ArrayList<String>();
 		reset();
 		read();
 	}
@@ -58,6 +61,8 @@ public class AmapReader {
 		Pattern c = Pattern.compile("^@(\\S+)\\s+(\\S+)$");
 		Matcher cm = c.matcher("");
 
+		firstTime = true;
+
 		try {
 			BufferedReader br = new BufferedReader(new InputStreamReader(is));
 		
@@ -77,6 +82,8 @@ public class AmapReader {
 					if ( nameSeqMap.containsKey( key ) )
 						val = nameSeqMap.get(key) + val;
 					nameSeqMap.put(key,val);
+					if ( firstTime )
+						keys.add(key);
 					continue;
 				}
 
@@ -94,54 +101,10 @@ public class AmapReader {
 			ioe.printStackTrace();
 		}
 	}
-/*
-	private void read() {
-		Pattern pw = Pattern.compile("^previous weight= (\\d+\\.\\d+)\\s+.*");
-		Matcher pwm = pw.matcher("");
-
-		Pattern nw = Pattern.compile("^new weight= (\\d+\\.\\d+)$");
-		Matcher nwm = nw.matcher("");
-
-		Pattern s = Pattern.compile("^(\\S+)\\s+(\\S+)$");
-		Matcher sm = s.matcher("");
-
-		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		
-			String line = null;
-			while ( (line = br.readLine()) != null ) {
-				pwm.reset(line);
-				if ( pwm.matches() ) {
-					saveAlignment();
-					pWeight = new Double( pwm.group(1) ).doubleValue();
-					continue;
-				}
-
-				nwm.reset(line);
-				if ( nwm.matches() ) {
-					nWeight = new Double( nwm.group(1) ).doubleValue();
-					continue;
-				}
-
-				sm.reset(line);
-				if ( sm.matches() ) {
-					String key = sm.group(1);
-					String val = sm.group(2);
-					if ( nameSeqMap.containsKey( key ) )
-						val = nameSeqMap.get(key) + val;
-					nameSeqMap.put(key,val);
-					continue;
-				}
-			}
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
-	}
-	*/
 
 	private void saveAlignment() {
 		if ( pWeight > 0 ) {
-			Alignment a = new Alignment( nameSeqMap, nameColorMap, pWeight );
+			Alignment a = new Alignment( keys, nameSeqMap, nameColorMap, pWeight );
 			alignments.add(a);
 			reset();
 		}
@@ -151,6 +114,7 @@ public class AmapReader {
 		nameSeqMap = new HashMap<String,String>();
 		nameColorMap = new HashMap<String,String>();
 		pWeight = -1;
+		firstTime = false;
 	}
 }
 

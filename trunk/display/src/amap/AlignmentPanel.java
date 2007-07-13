@@ -33,6 +33,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.awt.font.GlyphVector;
 import java.awt.font.FontRenderContext;
@@ -42,9 +43,10 @@ public class AlignmentPanel extends JPanel implements ComponentListener {
 	List<Alignment> aligns;
 	List<String> orderedKeys; 
 	int index;
-	int nameXOff; 
-	int nameYOff;
-	int lineWidth;
+	int xOff; 
+	int yOff;
+	int numCharsAcross;
+	int nameWidth;
 	int glyphWidth;
 	int len; 
 	int groupOff;
@@ -52,57 +54,66 @@ public class AlignmentPanel extends JPanel implements ComponentListener {
 	int height;
 	int width;
 	int os;
-	Map<String,Color> colMap;
+	Map<String,Color> backColMap;
+	//Map<String,Color> textColMap;
 	public AlignmentPanel(List<Alignment> aligns, int initWidth) {
 		super();
 		this.aligns = aligns;
 		this.width = initWidth;
 		Map<String,String> seqs = aligns.get(0).getSequences();
-		orderedKeys = new ArrayList<String>( seqs.keySet() );
+		orderedKeys = aligns.get(0).getOrderedKeys(); 
 		Collections.sort(orderedKeys);
 		defaultFont = new Font("Courier",Font.PLAIN,12);
 		index = 0;
+
 		// Aaaaargh
 		if ( System.getProperty("os.name").matches(".*[Mm][Aa][Cc].*") )
 			os = -1;
 		else
 			os = 1;
-		colMap = new HashMap<String,Color>();
-		colMap.put("0",new Color(255,255,255)); 
-		colMap.put("1",new Color(0,128,255)); // CMYK 1, 0.5, 0, 0
-		colMap.put("2",new Color(64,25,255)); // CMYK 0.75, 0.9, 0, 0
-		colMap.put("3",new Color(255,0,255)); // CMYK 0, 1, 0, 0
-		/*
-		colMap.put("0",new Color(0,128,255)); // CMYK 1, 0.5, 0, 0
-		colMap.put("1",new Color(255,230,41)); // CMYK 0, 0.1, 0.84, 0
-		colMap.put("2",new Color(64,25,255)); // CMYK 0.75, 0.9, 0, 0
-		colMap.put("3",new Color(255,0,255)); // CMYK 0, 1, 0, 0
-		*/
+
+		backColMap = new HashMap<String,Color>();
+		backColMap.put("0",new Color(255,255,255)); 
+		backColMap.put("1",new Color(0,128,255)); // CMYK 1, 0.5, 0, 0
+		backColMap.put("2",new Color(64,25,255)); // CMYK 0.75, 0.9, 0, 0
+		backColMap.put("3",new Color(255,0,255)); // CMYK 0, 1, 0, 0
+
+		//textColMap = new HashMap<String,Color>();
+		//textColMap.put("0",Color.black); 
+		//textColMap.put("1",Color.black); 
+		//textColMap.put("2",new Color(255,230,41)); // CMYK 0, 0.1, 0.84, 0
+		//textColMap.put("3",Color.black); 
+
 		sizeScreen( new Dimension(initWidth,0) );
 	}
 
 	private void sizeScreen(Dimension d) {
 		width = (int)(d.getWidth()); 
 
-		nameXOff = 30;
-		nameYOff = 20;
-		glyphWidth = 12;
-		groupOff = nameYOff * (orderedKeys.size() + 1);
+		glyphWidth = 10;
 
-		int allowedWidth = width - (4*nameXOff) - nameYOff;
-		Map<String,String> seqs = aligns.get(0).getSequences();
-
-		String align = seqs.get(orderedKeys.get(0));
+		// find the width of the sequence name
 		FontMetrics fm = getFontMetrics(defaultFont);
+		nameWidth = 0;	
+		for ( String key : orderedKeys )
+			nameWidth = Math.max(nameWidth,fm.stringWidth(key));
 
-		while ( fm.stringWidth(align) > allowedWidth ) 
-			align = align.substring(0,align.length()-1);
+		// give the seq name some breathing room
+		nameWidth += glyphWidth;
 
-		len = align.length();
-		int seqLen = seqs.get(orderedKeys.get(0)).length();
-		height = ((seqLen/len)+1) * groupOff;
+		// set margins
+		xOff = 20;
+		yOff = 20;
 
-		lineWidth = (width - nameXOff*4)/glyphWidth;
+		// size of one multiple alignment row
+		groupOff = yOff * (orderedKeys.size() + 1);
+
+		// figure out how many multiple alignment rows there will be	
+		int seqAllowedWidth = width - xOff - nameWidth - xOff - xOff;
+		numCharsAcross = seqAllowedWidth/glyphWidth;
+		len = aligns.get(0).getSequences().get(orderedKeys.get(0)).length();
+
+		height = ((len/numCharsAcross)+1) * groupOff;
 
 		setPreferredSize( new Dimension(width,height) );
 	}
@@ -140,9 +151,9 @@ public class AlignmentPanel extends JPanel implements ComponentListener {
 			
 			for ( int j = 0; j < gv.getNumGlyphs(); j++ ) {
 
-				int xLoc = nameXOff*3+(j%lineWidth)*glyphWidth;
-				int yLoc = (j/lineWidth)*groupOff+nameYOff*i;
-				int glyphYLoc = os*((j/lineWidth)*groupOff-nameYOff*i);
+				int xLoc = xOff+nameWidth+((j%numCharsAcross)*glyphWidth);
+				int yLoc = ((j/numCharsAcross)*groupOff)+(yOff*i);
+				int glyphYLoc = os*(((j/numCharsAcross)*groupOff)-(yOff*i));
 
 				// set glyph position
 				Point2D pos = gv.getGlyphPosition(j); 
@@ -150,19 +161,24 @@ public class AlignmentPanel extends JPanel implements ComponentListener {
 				gv.setGlyphPosition(j,pos);
 
 				// draw the background rect 
-				g2.setPaint(colMap.get( colString.substring(j,j+1) ));
-				g2.fillRect(xLoc,yLoc-nameYOff+5,glyphWidth,nameYOff);
+				String colCode = colString.substring(j,j+1);
+				g2.setPaint(backColMap.get( colCode ));
+				g2.fillRect(xLoc-1,yLoc-yOff+6,glyphWidth,yOff);
 
 				// draw the sequence name
-				if ( j%lineWidth == 0 ) {
+				if ( j%numCharsAcross == 0 ) {
 					g2.setPaint(Color.black);
-					g2.drawString(name,nameXOff,yLoc );
+					g2.drawString(name,xOff,yLoc );
 				}
+
+				// draw the glyph
+				//Shape glyph = gv.getGlyphOutline(j);
+				//g2.setPaint(textColMap.get( colCode ));
+				//g2.fill(glyph);
 			}
 
 			g2.setPaint(Color.black);
 			g2.drawGlyphVector(gv,0,0);
-
 		}
 	}
 
