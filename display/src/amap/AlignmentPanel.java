@@ -55,7 +55,7 @@ public class AlignmentPanel extends JPanel implements ComponentListener {
 	int width;
 	int os;
 	Map<String,Color> backColMap;
-	//Map<String,Color> textColMap;
+	Map<String,Color> textColMap;
 	public AlignmentPanel(List<Alignment> aligns, int initWidth) {
 		super();
 		this.aligns = aligns;
@@ -78,11 +78,11 @@ public class AlignmentPanel extends JPanel implements ComponentListener {
 		backColMap.put("2",new Color(64,25,255)); // CMYK 0.75, 0.9, 0, 0
 		backColMap.put("3",new Color(255,0,255)); // CMYK 0, 1, 0, 0
 
-		//textColMap = new HashMap<String,Color>();
-		//textColMap.put("0",Color.black); 
-		//textColMap.put("1",Color.black); 
-		//textColMap.put("2",new Color(255,230,41)); // CMYK 0, 0.1, 0.84, 0
-		//textColMap.put("3",Color.black); 
+		textColMap = new HashMap<String,Color>();
+		textColMap.put("0",Color.black); 
+		textColMap.put("1",Color.white); 
+		textColMap.put("2",new Color(255,230,41)); // CMYK 0, 0.1, 0.84, 0
+		textColMap.put("3",Color.black); 
 
 		sizeScreen( new Dimension(initWidth,0) );
 	}
@@ -172,13 +172,13 @@ public class AlignmentPanel extends JPanel implements ComponentListener {
 				}
 
 				// draw the glyph
-				//Shape glyph = gv.getGlyphOutline(j);
-				//g2.setPaint(textColMap.get( colCode ));
-				//g2.fill(glyph);
+				Shape glyph = gv.getGlyphOutline(j);
+				g2.setPaint(textColMap.get( colCode ));
+				g2.fill(glyph);
 			}
 
-			g2.setPaint(Color.black);
-			g2.drawGlyphVector(gv,0,0);
+			//g2.setPaint(Color.black);
+			//g2.drawGlyphVector(gv,0,0);
 		}
 	}
 
