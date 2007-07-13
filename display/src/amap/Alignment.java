@@ -29,12 +29,18 @@ public class Alignment {
 
 	Map<String,String> seqs;
 	Map<String,String> colors;
+	List<String> keys;
 	double nWeight;
 
-	public Alignment(Map<String,String> seqs, Map<String,String> colors, double nWeight) {
+	public Alignment(List<String> keys, Map<String,String> seqs, Map<String,String> colors, double nWeight) {
+		this.keys = keys;
 		this.seqs = seqs;
 		this.colors = colors;
 		this.nWeight = nWeight;
+	}
+
+	public List<String> getOrderedKeys() {
+		return keys;
 	}
 
 	public Map<String,String> getSequences() {
