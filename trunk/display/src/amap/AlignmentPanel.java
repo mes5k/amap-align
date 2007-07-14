@@ -62,7 +62,6 @@ public class AlignmentPanel extends JPanel implements ComponentListener {
 		this.width = initWidth;
 		Map<String,String> seqs = aligns.get(0).getSequences();
 		orderedKeys = aligns.get(0).getOrderedKeys(); 
-		Collections.sort(orderedKeys);
 		defaultFont = new Font("Courier",Font.PLAIN,12);
 		index = 0;
 
