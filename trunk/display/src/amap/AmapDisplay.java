@@ -47,7 +47,7 @@ public class AmapDisplay {
         	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         	AmapPanel panel = new AmapPanel(aligns);
-        	panel.setPreferredSize( new Dimension(500,700) );
+        	panel.setPreferredSize( new Dimension(700,700) );
 
         	//Display the window.
         	frame.setContentPane(panel);
