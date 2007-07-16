@@ -140,6 +140,8 @@ public class AmapPanel extends JPanel
 		alignSlider.setValue(index);
 		indexField.setText(Integer.toString(index));
 		weightField.setText(Double.toString(aligns.get(index).getWeight()));
+		PropertyChangeHandler.firePropertyChange(PropertyChangeIDs.CHANGE_ALIGNMENT.toString(),
+		                                         null, aligns.get(index));
 	}
 
     public void propertyChange(PropertyChangeEvent e) {
@@ -203,7 +205,7 @@ public class AmapPanel extends JPanel
 		if ( high < low )
 			return -1;
 		if ( low == high - 1 )
-			return high;
+			return low;
 		int mid = (high + low) / 2;
 		if ( weight < aligns.get(mid).getWeight() ) 
 			return bSearch(mid,high,weight);
