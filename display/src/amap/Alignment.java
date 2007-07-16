@@ -71,4 +71,16 @@ public class Alignment {
 
 		return sb.toString();
 	}
+
+	public String toMultiFasta() {
+		StringBuffer sb = new StringBuffer();
+		for ( String key : seqs.keySet() ) {
+			sb.append(">");
+			sb.append(key);
+			sb.append("\n");
+			sb.append(seqs.get(key));
+			sb.append("\n");
+		}
+		return sb.toString();
+	}
 }

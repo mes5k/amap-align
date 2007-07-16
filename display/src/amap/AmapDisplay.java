@@ -46,6 +46,15 @@ public class AmapDisplay {
         	final JFrame frame = new JFrame("AMAP Display");
         	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+			JMenuBar menuBar = new JMenuBar();
+			JMenu fileMenu = new JMenu("File");
+			menuBar.add(fileMenu);
+			JMenuItem saveAsFasta = new JMenuItem( new SaveAsFastaAction(frame) );
+			fileMenu.add(saveAsFasta);
+
+			frame.setJMenuBar(menuBar);
+
+
         	AmapPanel panel = new AmapPanel(aligns);
         	panel.setPreferredSize( new Dimension(700,700) );
 
