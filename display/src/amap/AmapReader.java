@@ -97,6 +97,7 @@ public class AmapReader {
 					continue;
 				}
 			}
+			saveAlignment();
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 		}
