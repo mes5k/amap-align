@@ -43,8 +43,12 @@ public class AmapPanel extends JPanel
     java.util.List<Alignment> aligns;
 	JButton nextButton;
 	JButton prevButton;
+	JButton startStopButton;
 	int maxSliderVal;
 	Map<JFormattedTextField,Boolean> ok2update;
+	Timer timer;
+	boolean frozen = true;
+	int delay = 500;
 
     public AmapPanel(java.util.List<Alignment> aligns) {
 		this.aligns = aligns;
@@ -53,6 +57,10 @@ public class AmapPanel extends JPanel
 		ok2update = new HashMap<JFormattedTextField,Boolean>();
 
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
+		// set up animation timer
+		timer = new Timer(delay,this);
+		timer.setCoalesce(true);
 
         //Create the label.
         JLabel sliderLabel = new JLabel("Alignment: ", JLabel.CENTER);
@@ -85,6 +93,9 @@ public class AmapPanel extends JPanel
 		nextButton = new JButton("Next");
 		nextButton.addActionListener(this);
 
+		startStopButton = new JButton("Start Animation");
+		startStopButton.addActionListener(this);
+
 		// create prev button
 		prevButton = new JButton("Prev");
 		prevButton.addActionListener(this);
@@ -114,6 +125,7 @@ public class AmapPanel extends JPanel
         //Create a subpanel for the label and text field.
         JPanel labelAndTextField = new JPanel(); //use FlowLayout
 		labelAndTextField.add(prevButton);
+		labelAndTextField.add(startStopButton);
 		labelAndTextField.add(nextButton);
         labelAndTextField.add(sliderLabel);
         labelAndTextField.add(indexField);
@@ -174,17 +186,26 @@ public class AmapPanel extends JPanel
 	public void actionPerformed(ActionEvent e) {
 		int curr = 	(int)alignSlider.getValue(); 
 		//System.out.println("curr val: " + curr);
-		if ( e.getSource() == nextButton ) {
+		if ( e.getSource() == nextButton || e.getSource() == timer ) {
 			if ( curr == maxSliderVal )
 				update(0);
 			else
 				update(curr+1);
-
 		} else if ( e.getSource() == prevButton ) {
 			if ( curr == 0 )
 				update(maxSliderVal);
 			else
 				update(curr-1);
+		} else if ( e.getSource() == startStopButton ) {
+			if ( frozen ) {
+        		timer.start();
+		        frozen = false;
+				startStopButton.setText("Stop Animation");
+			} else {
+        		timer.stop();
+        		frozen = true;
+				startStopButton.setText("Start Animation");
+			}
 		}
 	}
 
@@ -235,5 +256,4 @@ public class AmapPanel extends JPanel
             }
         });
 	}
-
 }
