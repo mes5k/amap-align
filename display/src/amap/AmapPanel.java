@@ -83,6 +83,7 @@ public class AmapPanel extends JPanel
         java.text.NumberFormat numFormat = java.text.NumberFormat.getNumberInstance();
         NumberFormatter numFormatter = new NumberFormatter(numFormat);
         numFormatter.setMinimum(new Float(0f));
+        numFormatter.setMaximum(new Float(Float.MAX_VALUE));
         weightField = new JFormattedTextField(numFormatter);
         weightField.setColumns(10); //get some space
         weightField.addPropertyChangeListener( this ); 
@@ -175,7 +176,7 @@ public class AmapPanel extends JPanel
 			//System.out.println("weight" );
 			Float weight = (Float)e.getNewValue();
 			int index = getIndexFromWeight( weight.floatValue() );
-			if (index > 0 && index <= maxSliderVal) {
+			if (index >= 0 && index <= maxSliderVal) {
 				update(index);
 				ok2update.put(weightField,false);
 				//System.out.println("weight alignSilder val: " + alignSlider.getValue());
@@ -223,8 +224,13 @@ public class AmapPanel extends JPanel
 	}
 
 	private int bSearch(int low, int high, float weight) {
+		System.out.println(low + " " + high + " " + weight);
 		if ( high < low )
 			return -1;
+		if ( weight <= aligns.get(high).getWeight() ) 
+			return high;
+		if ( weight >= aligns.get(low).getWeight() ) 
+			return low;
 		if ( low == high - 1 )
 			return low;
 		int mid = (high + low) / 2;
