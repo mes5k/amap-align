@@ -74,7 +74,7 @@ public class Alignment {
 
 	public String toMultiFasta() {
 		StringBuffer sb = new StringBuffer();
-		for ( String key : seqs.keySet() ) {
+		for ( String key : keys ) {
 			sb.append(">");
 			sb.append(key);
 			sb.append("\n");

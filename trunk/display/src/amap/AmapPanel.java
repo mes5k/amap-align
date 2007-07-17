@@ -48,7 +48,7 @@ public class AmapPanel extends JPanel
 	Map<JFormattedTextField,Boolean> ok2update;
 	Timer timer;
 	boolean frozen = true;
-	int delay = 500;
+	int delay = 200;
 
     public AmapPanel(java.util.List<Alignment> aligns) {
 		this.aligns = aligns;
@@ -82,7 +82,7 @@ public class AmapPanel extends JPanel
         //Create the alignment weight field 
         java.text.NumberFormat numFormat = java.text.NumberFormat.getNumberInstance();
         NumberFormatter numFormatter = new NumberFormatter(numFormat);
-        numFormatter.setMinimum(new Integer(0));
+        numFormatter.setMinimum(new Float(0f));
         weightField = new JFormattedTextField(numFormatter);
         weightField.setColumns(10); //get some space
         weightField.addPropertyChangeListener( this ); 
@@ -173,7 +173,7 @@ public class AmapPanel extends JPanel
 			}
 		} else if ( e.getSource() == weightField && ok2update.get(weightField) ) {
 			//System.out.println("weight" );
-			Number weight = (Number)e.getNewValue();
+			Float weight = (Float)e.getNewValue();
 			int index = getIndexFromWeight( weight.floatValue() );
 			if (index > 0 && index <= maxSliderVal) {
 				update(index);
