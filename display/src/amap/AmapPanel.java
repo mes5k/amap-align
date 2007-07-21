@@ -224,7 +224,7 @@ public class AmapPanel extends JPanel
 	}
 
 	private int bSearch(int low, int high, float weight) {
-		System.out.println(low + " " + high + " " + weight);
+	    //System.out.println(low + " " + high + " " + weight);
 		if ( high < low )
 			return -1;
 		if ( weight <= aligns.get(high).getWeight() ) 
