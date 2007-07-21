@@ -4,16 +4,30 @@ See http://baboon.math.berkeley.edu/amap/ for more information.
 INSTALL
 =======
 
-To build the AMAP alignment code, just type:
+To build the AMAP alignment code change to the 'align' directory and type:
 
 	% make
 
 
-To build the AmapDisplayer, you'll need ant (http://ant.apache.org) installed and,
-if I ever get around to writing unit tests, JUnit (http://junit.org).  Once ant 
-is installed, just type:
+This distribution includes the compiled AmapDisplay.jar file. 
+In case you want to build the AmapDisplay from the source code, 
+you'll need ant (http://ant.apache.org) installed.  
+Once ant is installed change to the 'display' directory, and type:
 
 	% ant all
+
+USE
+===
+To run AMAP with the default options change to the 'align' directory and type:
+	% amap <multi-fasta-file-name>
+
+If no file name is provided the list of options are printed.
+
+In order to use the AMAP Display run AMAP with the -gui option, and save the output to a file, 
+then use the file as the input to AmapDisplay. For example, type:
+
+	% align/amap -gui examples/BB12020.tfa > examples/BB12020.tfa.out
+	% java -jar display\AmapDisplay.jar examples\BB12020.tfa.out 
 
 
 LICENSE

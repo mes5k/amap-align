@@ -729,6 +729,10 @@ SafeVector<string> ParseParams (int argc, char **argv){
 	 << "       -print, --print-posteriors" << endl
 	 << "              only print the posterior probability matrices (default: "
 	 << (onlyPrintPosteriors ? "on" : "off") << ")" << endl
+	 << endl
+	 << "       -gui" << endl
+	 << "              print output for the AMAP Display Java based GUI (default: "
+	 << (outputForGUI ? "on" : "off") << ")" << endl
 	 << endl;
     exit (1);
   }
