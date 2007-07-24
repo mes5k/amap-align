@@ -686,8 +686,8 @@ class ProbabilisticModel {
 
       // fill in rest of row
       for (int j = 1; j <= seq2Length; j++){
-        ChooseBestOfThree (*(posteriorPtr++) + oldRow[j-1], newRow[j-1] + posterior[seq2GapPostBase + j] * gapFactor, 
-			   oldRow[j] + posterior[seq1GapPostBase + i] * gapFactor, 'D', 'L', 'U', &newRow[j], tracebackPtr++);
+        ChooseBestOfThree (*(posteriorPtr++) + oldRow[j-1], newRow[j-1] + posterior[seq2GapPostBase + j] * gapFactor / 2, 
+			   oldRow[j] + posterior[seq1GapPostBase + i] * gapFactor / 2, 'D', 'L', 'U', &newRow[j], tracebackPtr++);
       }
 
       // swap rows
@@ -1086,7 +1086,7 @@ class ProbabilisticModel {
 		  if (jj == row[rowPos].first)
 		    posterior[base + align2Pos] += row[rowPos++].second;
 		} else { // a gap character in t
-		  posterior[base + align2Pos] += matrix->GetGapPosterior(0,ii) * gapFactor;
+		  posterior[base + align2Pos] += matrix->GetGapPosterior(0,ii) * gapFactor / 2;
 		}
 	      }
 	      posterior[gapPostBase + align1Pos] += matrix->GetGapPosterior(0,ii);
@@ -1097,7 +1097,7 @@ class ProbabilisticModel {
 		// add in all relevant values
 		if (iter2[align2Pos] != '-') { // a non gap character in t
 		  jj++;
-		  posterior[base + align2Pos] += matrix->GetGapPosterior(1,jj) * gapFactor;
+		  posterior[base + align2Pos] += matrix->GetGapPosterior(1,jj) * gapFactor / 2;
 		} else { // a gap character in t
 		}
 	      }

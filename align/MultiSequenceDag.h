@@ -245,7 +245,7 @@ class Edge {
       cerr << "previous weight= " << weight;
       cerr << " sumPmatch= " << sumPmatch << " sumPgap= " << sumPgap << endl;
     }
-    weight = sumPmatch / sumPgap; 
+    weight = 2 * sumPmatch / sumPgap; 
     if (enableVerbose) {
       cerr << "new weight= " << weight << endl;
     }
@@ -286,7 +286,7 @@ class Edge {
       cerr << "previous weight= " << weight;
       cerr << " sumPmatch= " << sumPmatch << " sumPgap= " << sumPgap << endl;
     }
-    weight = (sumPmatch - gapFactor * sumPgap) / (c1pos.size() * c2pos.size());
+    weight = (2 * sumPmatch - gapFactor * sumPgap) / (c1pos.size() * c2pos.size());
     if (enableVerbose) {
       cerr << "new weight= " << weight << endl;
     }
@@ -372,6 +372,8 @@ class MultiSequenceDag {
   MPIIC seqPos2colIndex;                // mapping from sequence positions to columns
   float expectedAccuracy;               // the expected accuracy of the alignment
   bool outputForGUI;                    // true if the output is for the AMAP GUI
+  float guiStartWeight;                 // the edge weight at which output for GUI starts
+  int guiStepSize;                      // the step size for the GUI output
  public:
   static const char pepGroup[26];             // peptide groups for GUI coloring (from TEXshade)
   static const bool pepSim[26][26];         // peptide similarities for GUI coloring (from TEXshade)
@@ -487,14 +489,14 @@ class MultiSequenceDag {
     indexes.sort();
     list<int>::iterator idxIter = indexes.begin();
     for (unsigned i = 0; i < rBackward.size(); i++) {
-      if (outputForGUI)
-	cout << rBackward[0]->GetIndex() << ' ';
+      //      if (outputForGUI)
+      //	cout << rBackward[0]->GetIndex() << ' ';
       rBackward[0]->SetIndex(*(idxIter++));
       pop_heap(rBackward.begin(),rBackward.end() - i,greater_index());
     }
     for (unsigned i = 0; i < rForward.size(); i++) {
-      if (outputForGUI)
-	cout << rForward[0]->GetIndex() << ' ';
+      //      if (outputForGUI)
+      //	cout << rForward[0]->GetIndex() << ' ';
       rForward[0]->SetIndex(*(idxIter++));
       pop_heap(rForward.begin(),rForward.end() - i,greater_index());
     }
@@ -543,7 +545,8 @@ class MultiSequenceDag {
   // Uses input alignment if aligned is true.
   /*****************************************************************/
 
-  MultiSequenceDag (MultiSequence *msa, bool aligned, bool forGUI = false) : sequences (msa), numSequences(msa->GetNumSequences()), outputForGUI(forGUI) {
+  MultiSequenceDag (MultiSequence *msa, bool aligned, bool forGUI, float start, int step) : 
+    sequences (msa), numSequences(msa->GetNumSequences()), outputForGUI(forGUI), guiStartWeight(start), guiStepSize(step) {
     init(aligned);
   }
   
@@ -625,16 +628,16 @@ class MultiSequenceDag {
       col1 = lBound;
       col2 = uBound;
     } else {
-      if (outputForGUI)
-	cout << "Reorder ";
+      //      if (outputForGUI)
+      //	cout << "Reorder ";
       Reorder(rForward, rBackward);
-      if (outputForGUI)
-	cout << endl;
+      //      if (outputForGUI)
+      //	cout << endl;
     }
     newEdge->sourceColumn = col1;
     newEdge->targetColumn = col2;
-    if (outputForGUI)
-      cout << "Merge " << col2->GetIndex() << ' ' << col1->GetIndex() << endl;
+    //    if (outputForGUI)
+    //      cout << "Merge " << col2->GetIndex() << ' ' << col1->GetIndex() << endl;
     Merge(newEdge);
     oldColumns.push_back(col2);              // keep pointers to old columns for later memory deallocation
     columns.remove(col2);
@@ -705,7 +708,7 @@ class MultiSequenceDag {
     // wrap sequences in MultiSequence object
     MultiSequence *ret = new MultiSequence();
     for (int i = 0; i < numSequences; i++){
-      ret->AddSequence (new Sequence(newPtrs[i], sequences->GetSequence(i)->GetHeader(), newLength,
+      ret->AddSequence (new Sequence(newPtrs[i], sequences->GetSequence(i)->GetName(), newLength,
                                       sequences->GetSequence(i)->GetSortLabel(), 
 				     sequences->GetSequence(i)->GetLabel()));
     }
@@ -730,8 +733,8 @@ class MultiSequenceDag {
 
     // add all needed columns
     for (int j = 0; j < numSequences; j++) {
-      s += '>' + sequences->GetSequence(j)->GetHeader() + ' ';      
-      colors += '@' + sequences->GetSequence(j)->GetHeader() + ' ';      
+      s += '>' + sequences->GetSequence(j)->GetName() + ' ';      
+      colors += '@' + sequences->GetSequence(j)->GetName() + ' ';      
       for (list<Column*>::iterator colIter = columns.begin(); colIter != columns.end(); colIter++) {
 	MII colPos = (*colIter)->GetSeqPositions();
 	if (colPos.find(j) != colPos.end()) {
@@ -775,8 +778,9 @@ class MultiSequenceDag {
 			  bool enableVerbose, bool enableEdgeReordering, bool useTgf, float edgeWeightThreshold){
     priority_queue<Edge*, vector<Edge*>, smaller_weight> edges;
     Edge *edge;
+    int guiFrame = 0;
     cerr << "Creating candidate edge list" << endl;
-    if (outputForGUI) {
+    if (outputForGUI && guiStartWeight == std::numeric_limits<float>::max()) {
       cout << "Weight " << std::numeric_limits<float>::max() << endl << 
 	this->GetSequences() << endl;
     }
@@ -790,11 +794,11 @@ class MultiSequenceDag {
 	  for (SafeVector<PIF>::iterator rowPtr = ijMatrix->GetRowPtr(ii), 
 		 rowEnd = rowPtr + ijMatrix->GetRowSize(ii); rowPtr != rowEnd; rowPtr++) {
 	    int jj = rowPtr->first;
-	    float pMatch = rowPtr->second;
+	    float pMatch = 2 * rowPtr->second;
 	    if (!pMatch)
 	      continue;
 	    float pGapjj = ijMatrix->GetGapPosterior(1,jj);
-	    float weight = useTgf ? pMatch / (pGapii + pGapjj) : pMatch - gapFactor * (pGapii + pGapjj);
+	    float weight = useTgf ? 2 * pMatch / (pGapii + pGapjj) : 2* pMatch - gapFactor * (pGapii + pGapjj);
 	    if (weight < edgeWeightThreshold || (useTgf && weight < gapFactor))
 	      continue;
 	    edge = new Edge(seqPos2colIndex[PII(i,ii)], seqPos2colIndex[PII(j,jj)], weight);
@@ -841,7 +845,7 @@ class MultiSequenceDag {
       }
       if (!result) { 
 	expectedAccuracy += delta;
-	if (outputForGUI) {
+	if (outputForGUI && guiStartWeight >= edge->weight && !(guiFrame = ++guiFrame % guiStepSize)) {
 	  cout << "Weight " << edge->weight << endl << 
 	    this->GetSequences() << endl;
 	}
