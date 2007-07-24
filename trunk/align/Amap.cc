@@ -41,10 +41,13 @@ bool enableEdgeReordering = true;
 bool useTgf = true;
 bool onlyPrintPosteriors = false;
 bool outputForGUI = false;
+
 int numConsistencyReps = 0;
 int numPreTrainingReps = 0;
 int numIterativeRefinementReps = 0;
+int guiStepSize = 1;
 
+float guiStartWeight = std::numeric_limits<float>::max();
 float cutoff = 0;
 float gapOpenPenalty = 0;
 float gapContinuePenalty = 0;
@@ -567,7 +570,7 @@ MultiSequence *DoAlign (MultiSequence *sequences, const ProbabilisticModel &mode
 	delete tree;
       } else {
 	cerr << "Building DAG" << endl;
-	MultiSequenceDag mds(sequences,false,outputForGUI);
+	MultiSequenceDag mds(sequences,false,outputForGUI,guiStartWeight,guiStepSize);
 	cerr << "Starting the sequence annealing process" << endl;
 	finalAlignment = mds.AlignDag(sparseMatrices, gapFactor, enableVerbose, enableEdgeReordering, useTgf, edgeWeightThreshold);
       }
@@ -730,9 +733,10 @@ SafeVector<string> ParseParams (int argc, char **argv){
 	 << "              only print the posterior probability matrices (default: "
 	 << (onlyPrintPosteriors ? "on" : "off") << ")" << endl
 	 << endl
-	 << "       -gui" << endl
+	 << "       -gui [START] [STEP]" << endl
 	 << "              print output for the AMAP Display Java based GUI (default: "
-	 << (outputForGUI ? "on" : "off") << ")" << endl
+	 << (outputForGUI ? "on" : "off") << ") " << endl
+	 << "              starting at weight START (default: infinity) with step size STEP (default: " << guiStepSize << ")" << endl
 	 << endl;
     exit (1);
   }
@@ -937,9 +941,33 @@ SafeVector<string> ParseParams (int argc, char **argv){
         enableVerbose = true;
       }
 
-      // verbose reporting
+      // output for AMAP Display
       else if (!strcmp (argv[i], "-gui")) {
         outputForGUI = true;
+        if (i < argc - 1){
+          if (GetFloat (argv[i + 1], &tempFloat)){
+            if (tempFloat < 0){
+              cerr << "ERROR: For option " << argv[i-1] << ", floating-point value must be non-negative." << endl;
+              exit (1);
+            }
+            else {
+              guiStartWeight = tempFloat;
+	      i++;
+	      if (i < argc - 1){
+		if (GetInteger (argv[i + 1], &tempInt)){
+		  if (tempInt < 1){
+		    cerr << "ERROR: For option " << argv[i-1] << ", integer must be positive." << endl;
+		    exit (1);
+		  }
+		  else {
+		    guiStepSize = tempInt;
+		    i++;
+		  }
+		}
+	      }
+	    }
+	  }
+	}
       }
 
       // alignment order

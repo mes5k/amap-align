@@ -20,7 +20,7 @@ float initDistrib1Default[] = { 0.3202854395, 0.3398572505, 0.3398572505 };
 float gapOpen1Default[] = { 0.1375414133, 0.1375414133 };
 float gapExtend1Default[] = { 0.7832147479, 0.7832147479 };
 */
-float gapFactorDefault = 0.5;
+float gapFactorDefault = 1;
 //float initDistrib1Default[] = { 0.6080327034f, 0.1959836632f, 0.1959836632f };
 float initDistrib1Default[] = { 0.400000006f, 0.3000000119f, 0.3000000119f };
 float gapOpen1Default[] = { 0.01993141696f, 0.01993141696f };
