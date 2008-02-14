@@ -15,7 +15,7 @@ CXX = g++
 #    c) RELEASE mode
 ################################################################################
 
-OTHERFLAGS = -DNumInsertStates=1 -DVERSION='"AMAP.2.1"'
+OTHERFLAGS = -DNumInsertStates=1 -DVERSION='"AMAP.2.2"'
 
 # debug mode    
 #CXXFLAGS = -g -W -Wall -pedantic -DENABLE_CHECKS -fno-inline $(OTHERFLAGS)
