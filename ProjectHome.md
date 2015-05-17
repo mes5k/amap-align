@@ -1,0 +1,1 @@
+A sequence annealing approach to multiple sequence alignment. A C++ alignment program and a Java display program are included.
