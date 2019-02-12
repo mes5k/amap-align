@@ -23,6 +23,8 @@
 #include <cstdlib>
 #include <cerrno>
 #include <iomanip>
+#include <cstring>  //BUG strcmp
+#include <climits> //BUG LONG_MAX https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=413477
 
 string parametersInputFilename = "";
 string parametersOutputFilename = "no training";
